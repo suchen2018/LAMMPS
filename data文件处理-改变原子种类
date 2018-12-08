@@ -1,0 +1,26 @@
+"""
+Created on Sat Dec  8 15:15:00 2018
+
+txt文件处理
+改变data文件的原子种类
+
+@author: n10027301
+"""
+
+with open ("data_Si_a2.txt","r") as f1:
+    with open ("data_Si_3.txt","a") as f2:
+        n = 0
+        for line in f1:
+            n+=1
+            if not line:
+                break
+            if 17 <= n and n <= 528:
+                list1 = line.split(" ")
+                list1[1] = '2'
+                del list1[5:]
+                insert = '\t'
+                b = insert.join(list1)
+                b+="\n"
+                f2.write(b)
+            else:
+                f2.write(line)
