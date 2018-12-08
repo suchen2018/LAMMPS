@@ -1,0 +1,120 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct 19 16:57:36 2018
+
+创建一个BCC结构，修改晶格常数和系统大小
+
+@author: n10027301
+"""
+
+# Generate LAMMPS data file using Crytal atom position
+
+import numpy as np
+
+# Lattice parameter for aluminum
+lattice_parameter = 3.50
+
+# Cubic FCC basis
+basis = np.array([[1.0, 0.0, 0.0],
+                 [0.0, 1.0, 0.0],
+                 [0.0, 0.0, 1.0]])*lattice_parameter
+                 
+base_atoms = np.array([[0.0, 0.0, 0.0],
+                       [0.5, 0.5, 0.5]])*lattice_parameter
+
+base_atoms1 = np.array([0.0, 0.0, 0.0])*lattice_parameter
+
+
+# Size of the system cell in lattice units
+# assuming an cubic cell, starting at the origin
+system_size = 2
+box_size = system_size*lattice_parameter
+
+# Generate atom positions
+positions = []
+for i in range(system_size):
+    for j in range(system_size):
+        for k in range(system_size):
+            base_position = np.array([i, j, k])
+            cart_position = np.inner(basis.T, base_position)
+            for atom in base_atoms:
+                positions.append(cart_position + atom)
+                
+for i in range(system_size):
+    for j in range(system_size):
+        a = i*lattice_parameter
+        b = j*lattice_parameter
+        positions.append([a, b, box_size])
+        
+for i in range(system_size):
+    for j in range(system_size):
+        a = i*lattice_parameter
+        b = j*lattice_parameter
+        positions.append([a, box_size, b])   
+
+for i in range(system_size):
+    for j in range(system_size):
+        a = i*lattice_parameter
+        b = j*lattice_parameter
+        positions.append([box_size, a, b])
+
+for i in range(system_size):
+    j = lattice_parameter*i
+    a = np.array([box_size, box_size, j])
+    positions.append(a)
+    b = np.array([box_size, j, box_size])
+    positions.append(b)
+    c = np.array([j, box_size, box_size])
+    positions.append(c)
+
+d = np.array([box_size, box_size, box_size])
+positions.append(d)
+
+# Generate another atom positions
+position2 = []
+a = lattice_parameter/4
+b = box_size-a
+
+list1=[a, b]
+for i in range(2):
+    for j in range(2):
+        for k in range(2):
+            positions.append(np.array([list1[i], list1[j], list1[k]]))
+
+#Write LAMMPS data file
+with open('crystalline_Li4o4Si_data.txt','w') as fdata:
+    # First line is a comment line
+    fdata.write('# BCC structure created by Python\n\n')
+    
+    #--- Header ---#
+    # Specify number of atoms and atom types
+    l1= len(positions)
+    fdata.write('{} atoms\n'.format(l1+len(position2)))
+    fdata.write('{} atom types\n'.format(2))
+    fdata.write('\n')
+    
+    # Specify box dimensions
+    fdata.write('{} {} xlo xhi\n'.format(0.0, box_size))
+    fdata.write('{} {} ylo yhi\n'.format(0.0, box_size))
+    fdata.write('{} {} zlo zhi\n'.format(0.0, box_size))
+    fdata.write('\n')
+    
+    # Masses
+    fdata.write('Masses\n\n')
+    fdata.write('{} {}\n'.format(1, 6.941))  
+    fdata.write('{} {}\n'.format(2, 28.086))
+    fdata.write('\n')
+    
+    # Atoms section
+    fdata.write('Atoms\n\n')
+    
+    # Write each position
+    for i, pos in enumerate(positions):
+        fdata.write("{}\ta\t{:.2f}\t{:.2f}\t{:.2f}\n".format(i+1,*pos))
+        
+    for j, pos in enumerate(position2):
+        a = j+1+l1
+        fdata.write("{}\tb\t{:.2f}\t{:.2f}\t{:.2f}\n".format(a,*pos)) # 有问题
+        
+        
+    # IF you have bonds and angles, further sections below
